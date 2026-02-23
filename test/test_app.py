@@ -10,3 +10,6 @@ def test_divide():
 def test_divide_zero():
     with pytest.raises(ZeroDivisionError):
         divide(10, 0)
+
+def add(a, b):
+    return a + b
