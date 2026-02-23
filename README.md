@@ -10,3 +10,4 @@ Small Python project to test:
 Trigger sonar pipeline
 trigger rebuild
 trigger rebuild
+# test change
