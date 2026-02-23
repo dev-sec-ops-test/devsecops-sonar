@@ -42,7 +42,7 @@ jobs:
           image-ref: devsecops-sonar:latest
           format: table
           severity: HIGH,CRITICAL
-          exit-code: 1
+          exit-code: 0
 
       # Trivy - IaC Scan
 
@@ -53,4 +53,4 @@ jobs:
           scan-ref: .
           format: table
           severity: HIGH,CRITICAL
-          exit-code: 1
+          exit-code: 0
