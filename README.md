@@ -6,3 +6,4 @@ Small Python project to test:
 - Unit testing
 - Docker build
 - Trivy scanning
+- Testing pipeline trigger
