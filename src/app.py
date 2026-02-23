@@ -1,26 +1,17 @@
 import os
 import hashlib
-import subprocess
 
-# 🔴 Hardcoded credentials (Security issue)
-ADMIN_PASSWORD = "admin123"
+# Vulnerabilities (for Sonar testing)
+
+ADMIN_PASSWORD = "admin123"  # Hardcoded secret
 
 def weak_hash(password):
-    # 🔴 Weak hashing algorithm (MD5)
-    return hashlib.md5(password.encode()).hexdigest()
+    return hashlib.md5(password.encode()).hexdigest()  # Weak hashing
 
 def login(user_input):
-    # 🔴 SQL Injection vulnerability
-    query = "SELECT * FROM users WHERE username = '" + user_input + "'"
+    query = "SELECT * FROM users WHERE username = '" + user_input + "'"  # SQL Injection
     return query
 
-def run_command(user_input):
-    # 🔴 Command Injection vulnerability
-    os.system("ls " + user_input)
-
-def dangerous_eval(user_input):
-    # 🔴 Arbitrary code execution
-    return eval(user_input)
-
-if __name__ == "__main__":
-    print("App running...")
+# Add this so tests pass
+def add(a, b):
+    return a + b
