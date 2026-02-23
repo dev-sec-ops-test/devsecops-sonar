@@ -7,3 +7,4 @@ Small Python project to test:
 - Docker build
 - Trivy scanning
 - Testing pipeline trigger
+Trigger sonar pipeline
