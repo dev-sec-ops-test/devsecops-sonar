@@ -8,3 +8,5 @@ Small Python project to test:
 - Trivy scanning
 - Testing pipeline trigger
 Trigger sonar pipeline
+trigger rebuild
+trigger rebuild
