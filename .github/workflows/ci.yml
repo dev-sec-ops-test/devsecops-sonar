@@ -10,21 +10,17 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      # Checkout
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Install Python Dependencies
       - name: Install Python Dependencies
         run: |
           python3 -m pip install --upgrade pip
           pip3 install -r requirements.txt
 
-      # Run Unit Tests
       - name: Run Unit Tests
         run: python3 -m pytest
 
-      # SonarQube Scan
       - name: SonarQube Scan
         run: |
           sonar-scanner \
@@ -33,32 +29,29 @@ jobs:
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
-      # Build Docker Image
       - name: Build Docker Image
         run: docker build -t devsecops-sonar:latest .
 
-      # Trivy Docker Image Scan (JSON)
-      - name: Trivy Scan Docker Image
-        run: |
-          trivy image -f json -o trivy-image-report.json devsecops-sonar:latest
+      - name: Trivy Image Scan (JSON)
+        run: trivy image -f json -o trivy-image-report.json devsecops-sonar:latest
 
+      - name: Trivy IaC Scan (JSON)
+        run: trivy config -f json -o trivy-iac-report.json .
 
-      # Trivy IaC Scan (JSON)
-      - name: Trivy IaC Scan
-        run: |
-          trivy config -f json -o trivy-iac-report.json .
+      - name: Install Excel Dependencies
+        run: pip3 install pandas openpyxl
 
-      # Convert Reports to Excel
-      - name: Convert JSON Reports to Excel
+      - name: Create Python Converter Script
         run: |
-          pip install pandas openpyxl
-          python << 'EOF'
-import json
+          echo 'import json
 import pandas as pd
 
-def convert_json_to_excel(json_file, excel_file):
-    with open(json_file) as f:
-        data = json.load(f)
+def convert(json_file, excel_file):
+    try:
+        with open(json_file) as f:
+            data = json.load(f)
+    except:
+        data = {}
 
     rows = []
     for result in data.get("Results", []):
@@ -75,11 +68,13 @@ def convert_json_to_excel(json_file, excel_file):
     df = pd.DataFrame(rows)
     df.to_excel(excel_file, index=False)
 
-convert_json_to_excel("trivy-image-report.json", "trivy-image-report.xlsx")
-convert_json_to_excel("trivy-iac-report.json", "trivy-iac-report.xlsx")
-EOF
+convert("trivy-image-report.json", "trivy-image-report.xlsx")
+convert("trivy-iac-report.json", "trivy-iac-report.xlsx")
+' > convert.py
 
-      # Upload Artifacts (ALWAYS)
+      - name: Convert JSON to Excel
+        run: python3 convert.py
+
       - name: Upload Trivy Image Report
         if: always()
         uses: actions/upload-artifact@v4
