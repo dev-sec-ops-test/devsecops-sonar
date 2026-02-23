@@ -10,25 +10,47 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Python
+      - name: Install Python Dependencies
         run: |
           python3 -m pip install --upgrade pip
           pip3 install -r requirements.txt
 
       - name: Run Unit Tests
-        run: |
-          python3 -m pytest
+        run: python3 -m pytest
 
       - name: SonarQube Scan
         run: |
           sonar-scanner \
             -Dsonar.projectKey=devsecops-sonar \
+            -Dsonar.sources=src \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
+      # Docker Build
+
       - name: Build Docker Image
-        run: |
-          docker build -t devsecops-sonar:latest .
+        run: docker build -t devsecops-sonar:latest .
+
+      # Trivy - Image Scan
+
+      - name: Trivy Scan Docker Image
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: devsecops-sonar:latest
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: 1
+
+      # Trivy - IaC Scan
+
+      - name: Trivy IaC Scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: config
+          scan-ref: .
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: 1
