@@ -27,7 +27,7 @@ jobs:
           sonar-scanner \
             -Dsonar.projectKey=devsecops-sonar \
             -Dsonar.host.url=http://localhost:9000 \
-            -Dsonar.token=${{ squ_6f40fea6da6cb09e8fde207beb689770fe0da5dc }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
       - name: Build Docker Image
         run: |
