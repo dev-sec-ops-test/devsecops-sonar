@@ -10,17 +10,21 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      # Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # Install Python Dependencies
       - name: Install Python Dependencies
         run: |
           python3 -m pip install --upgrade pip
           pip3 install -r requirements.txt
 
+      # Run Unit Tests
       - name: Run Unit Tests
         run: python3 -m pytest
 
+      # SonarQube Scan
       - name: SonarQube Scan
         run: |
           sonar-scanner \
@@ -29,21 +33,42 @@ jobs:
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
+      # Build Docker Image
       - name: Build Docker Image
         run: docker build -t devsecops-sonar:latest .
 
-      - name: Trivy Image Scan (JSON)
-        run: trivy image -f json -o trivy-image-report.json devsecops-sonar:latest
+      # Trivy Docker Image Scan (JSON)
+      - name: Trivy Scan Docker Image
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: devsecops-sonar:latest
+          format: json
+          output: trivy-image-report.json
+          severity: HIGH,CRITICAL
+          exit-code: 1
 
-      - name: Trivy IaC Scan (JSON)
-        run: trivy config -f json -o trivy-iac-report.json .
+      # Trivy IaC Scan (JSON)
+      - name: Trivy IaC Scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: config
+          scan-ref: .
+          format: json
+          output: trivy-iac-report.json
+          severity: HIGH,CRITICAL
+          exit-code: 1
 
+      # Install Excel Dependencies
       - name: Install Excel Dependencies
+        if: always()
         run: pip3 install pandas openpyxl
 
-      - name: Create Python Converter Script
+      # Convert JSON Reports to Excel
+      - name: Convert Reports to Excel
+        if: always()
         run: |
-          echo 'import json
+          echo '
+import json
 import pandas as pd
 
 def convert(json_file, excel_file):
@@ -72,9 +97,9 @@ convert("trivy-image-report.json", "trivy-image-report.xlsx")
 convert("trivy-iac-report.json", "trivy-iac-report.xlsx")
 ' > convert.py
 
-      - name: Convert JSON to Excel
-        run: python3 convert.py
+          python3 convert.py
 
+      # Upload Artifacts (Always)
       - name: Upload Trivy Image Report
         if: always()
         uses: actions/upload-artifact@v4
