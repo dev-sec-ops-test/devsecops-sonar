@@ -58,58 +58,14 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 1
 
-      # Install Excel Dependencies
       - name: Install Excel Dependencies
         if: always()
         run: pip3 install pandas openpyxl
 
-      # Convert JSON Reports to Excel
-      - name: Convert Reports to Excel
+      - name: Convert Trivy Image Report
         if: always()
-        run: |
-          echo '
-import json
-import pandas as pd
+        run: python3 scripts/convert_trivy_to_excel.py trivy-image-report.json trivy-image-report.xlsx
 
-def convert(json_file, excel_file):
-    try:
-        with open(json_file) as f:
-            data = json.load(f)
-    except:
-        data = {}
-
-    rows = []
-    for result in data.get("Results", []):
-        for vuln in result.get("Vulnerabilities", []) or []:
-            rows.append({
-                "Target": result.get("Target"),
-                "VulnerabilityID": vuln.get("VulnerabilityID"),
-                "PkgName": vuln.get("PkgName"),
-                "InstalledVersion": vuln.get("InstalledVersion"),
-                "Severity": vuln.get("Severity"),
-                "Title": vuln.get("Title"),
-            })
-
-    df = pd.DataFrame(rows)
-    df.to_excel(excel_file, index=False)
-
-convert("trivy-image-report.json", "trivy-image-report.xlsx")
-convert("trivy-iac-report.json", "trivy-iac-report.xlsx")
-' > convert.py
-
-          python3 convert.py
-
-      # Upload Artifacts (Always)
-      - name: Upload Trivy Image Report
+      - name: Convert Trivy IaC Report
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-image-report
-          path: trivy-image-report.xlsx
-
-      - name: Upload Trivy IaC Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-iac-report
-          path: trivy-iac-report.xlsx
+        run: python3 scripts/convert_trivy_to_excel.py trivy-iac-report.json trivy-iac-report.xlsx
