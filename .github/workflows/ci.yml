@@ -73,6 +73,17 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 1
 
+      # ---------------------------
+      # send Reports To Wazuh Log
+      # ---------------------------
+      - name: Send Clean Summary to Wazuh
+        if: always()
+        run: |
+          python3 scripts/trivy_summary_to_wazuh.py \
+          trivy-image-report.json \
+          devsecops-sonar:latest \
+          >> /var/log/devsecops-trivy.log
+
       # -------------------------------
       # 8️⃣ Install Excel Dependencies
       # -------------------------------
