@@ -10,21 +10,30 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      # Checkout Code
+
+      # -------------------------------
+      # 1️⃣ Checkout Repository
+      # -------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Install Python Dependencies
+      # -------------------------------
+      # 2️⃣ Install Python Dependencies
+      # -------------------------------
       - name: Install Python Dependencies
         run: |
           python3 -m pip install --upgrade pip
           pip3 install -r requirements.txt
 
-      # Run Unit Tests
+      # -------------------------------
+      # 3️⃣ Run Unit Tests
+      # -------------------------------
       - name: Run Unit Tests
         run: python3 -m pytest
 
-      # SonarQube Scan
+      # -------------------------------
+      # 4️⃣ SonarQube Scan (SAST)
+      # -------------------------------
       - name: SonarQube Scan
         run: |
           sonar-scanner \
@@ -33,11 +42,15 @@ jobs:
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
-      # Build Docker Image
+      # -------------------------------
+      # 5️⃣ Build Docker Image
+      # -------------------------------
       - name: Build Docker Image
         run: docker build -t devsecops-sonar:latest .
 
-      # Trivy Docker Image Scan (JSON)
+      # -------------------------------
+      # 6️⃣ Trivy Docker Image Scan
+      # -------------------------------
       - name: Trivy Scan Docker Image
         uses: aquasecurity/trivy-action@0.20.0
         with:
@@ -47,7 +60,9 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 1
 
-      # Trivy IaC Scan (JSON)
+      # -------------------------------
+      # 7️⃣ Trivy IaC Scan
+      # -------------------------------
       - name: Trivy IaC Scan
         uses: aquasecurity/trivy-action@0.20.0
         with:
@@ -58,10 +73,16 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 1
 
+      # -------------------------------
+      # 8️⃣ Install Excel Dependencies
+      # -------------------------------
       - name: Install Excel Dependencies
         if: always()
         run: pip3 install pandas openpyxl
 
+      # -------------------------------
+      # 9️⃣ Convert Reports to Excel
+      # -------------------------------
       - name: Convert Trivy Image Report
         if: always()
         run: python3 scripts/convert_trivy_to_excel.py trivy-image-report.json trivy-image-report.xlsx
@@ -69,3 +90,20 @@ jobs:
       - name: Convert Trivy IaC Report
         if: always()
         run: python3 scripts/convert_trivy_to_excel.py trivy-iac-report.json trivy-iac-report.xlsx
+
+      # -------------------------------
+      # 🔟 Upload Excel Artifacts
+      # -------------------------------
+      - name: Upload Trivy Image Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-image-report
+          path: trivy-image-report.xlsx
+
+      - name: Upload Trivy IaC Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-iac-report
+          path: trivy-iac-report.xlsx
